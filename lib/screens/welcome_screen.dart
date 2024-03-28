@@ -1,7 +1,7 @@
 import 'package:flash_chat/constants.dart';
 import 'package:flash_chat/screens/login_screen.dart';
 import 'package:flash_chat/screens/registration_screen.dart';
-import 'package:flash_chat/widgets/rounded_button.dart';
+import 'package:flash_chat/components/rounded_button.dart';
 import 'package:flutter/material.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 
@@ -55,7 +55,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               children: <Widget>[
                 Hero(
                   tag: kHeroLogo,
-                  child: Container(
+                  child: SizedBox(
                     height: 60,
                     child: Image.asset('images/logo.png'),
                   ),
