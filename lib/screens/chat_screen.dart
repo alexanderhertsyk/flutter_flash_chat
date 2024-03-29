@@ -34,17 +34,19 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  Future<void> _logout() => _auth.signOut();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: null,
+        automaticallyImplyLeading: false,
         actions: <Widget>[
           IconButton(
               icon: const Icon(Icons.close),
-              onPressed: () {
-                //Implement logout functionality
-              }),
+              onPressed: () =>
+                  _logout().then((value) => Navigator.pop(context))),
         ],
         title: const Text('⚡️Chat'),
         backgroundColor: Colors.lightBlueAccent,
