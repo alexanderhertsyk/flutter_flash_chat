@@ -1,11 +1,13 @@
 import 'package:flash_chat/constants.dart';
 import 'package:flash_chat/components/rounded_button.dart';
+import 'package:flash_chat/extensions/text_editing_controller_extension.dart';
+import 'package:flash_chat/screens/base_screen.dart';
 import 'package:flash_chat/screens/chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 
-class RegistrationScreen extends StatefulWidget {
+class RegistrationScreen extends BaseScreen {
   const RegistrationScreen({super.key});
 
   static const route = '/registration';
@@ -14,53 +16,32 @@ class RegistrationScreen extends StatefulWidget {
   State<RegistrationScreen> createState() => _RegistrationScreenState();
 }
 
-class _RegistrationScreenState extends State<RegistrationScreen> {
+class _RegistrationScreenState extends BaseScreenState<RegistrationScreen> {
   final _auth = FirebaseAuth.instance;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false;
-
-  void _setLoading(bool value) => setState(() => _isLoading = value);
-
-  void _resetController(TextEditingController controller) {
-    controller.value = controller.value.copyWith(
-      text: null,
-      selection: TextSelection.collapsed(
-        offset: controller.text.length,
-      ),
-    );
-  }
 
   Future<bool> _tryRegister() async {
-    _setLoading(true);
+    setLoading(true);
 
     try {
       await _auth.createUserWithEmailAndPassword(
         email: _emailController.value.text,
         password: _passwordController.value.text,
       );
+
       return true;
-    } catch (e) {
-      print(e);
+    } catch (e, st) {
+      log(e, st);
 
       return false;
     } finally {
-      _setLoading(false);
+      setLoading(false);
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: ModalProgressHUD(
-        inAsyncCall: _isLoading,
-        child: _build(context),
-      ),
-    );
-  }
-
-  Widget _build(BuildContext context) {
+  Widget buildBody(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Column(
@@ -102,11 +83,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               _tryRegister().then((registered) {
                 if (registered) {
                   Navigator.pushNamed(context, ChatScreen.route);
+                  setState(() {
+                    _emailController.resetValue();
+                    _passwordController.resetValue();
+                  });
                 }
-                setState(() {
-                  _resetController(_emailController);
-                  _resetController(_passwordController);
-                });
               });
             },
           ),
