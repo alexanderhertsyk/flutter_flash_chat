@@ -1,6 +1,8 @@
 import 'package:flash_chat/constants.dart';
 import 'package:flash_chat/components/rounded_button.dart';
+import 'package:flash_chat/screens/chat_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -12,6 +14,24 @@ class RegistrationScreen extends StatefulWidget {
 }
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
+  final _auth = FirebaseAuth.instance;
+  String _email = '';
+  String _password = '';
+
+  Future<void> _register(BuildContext context) async {
+    try {
+      final newUser = await _auth.createUserWithEmailAndPassword(
+          email: _email, password: _password);
+
+      // TODO: review mounted property
+      if (newUser != null && context.mounted) {
+        Navigator.pushNamed(context, ChatScreen.route);
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -33,18 +53,18 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               height: 48.0,
             ),
             TextField(
-              onChanged: (value) {
-                //Do something with the user input.
-              },
+              keyboardType: TextInputType.emailAddress,
+              textAlign: TextAlign.center,
+              onChanged: (value) => _email = value,
               decoration: kEmailDecoration,
             ),
             const SizedBox(
               height: 8.0,
             ),
             TextField(
-              onChanged: (value) {
-                //Do something with the user input.
-              },
+              obscureText: true,
+              textAlign: TextAlign.center,
+              onChanged: (value) => _password = value,
               decoration: kPasswordDecoration,
             ),
             const SizedBox(
@@ -53,7 +73,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             RoundedButton(
               title: 'Register',
               color: Colors.blueAccent,
-              onPressed: () {},
+              onPressed: () => _register(context),
             ),
           ],
         ),
