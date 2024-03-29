@@ -23,11 +23,12 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _trySetUser() {
-    User? loggedUser;
-
     try {
       final user = _auth.currentUser;
-      if (user != null) _loggedUser = user;
+      if (user != null) {
+        _loggedUser = user;
+        print(_loggedUser);
+      }
     } catch (e) {
       print(e);
     }

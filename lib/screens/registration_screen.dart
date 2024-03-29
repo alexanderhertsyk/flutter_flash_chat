@@ -18,17 +18,16 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   String _email = '';
   String _password = '';
 
-  Future<void> _register(BuildContext context) async {
+  Future<bool> _tryRegister() async {
     try {
       final newUser = await _auth.createUserWithEmailAndPassword(
           email: _email, password: _password);
 
-      // TODO: review mounted property
-      if (newUser != null && context.mounted) {
-        Navigator.pushNamed(context, ChatScreen.route);
-      }
+      return newUser != null;
     } catch (e) {
       print(e);
+
+      return false;
     }
   }
 
@@ -55,7 +54,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             TextField(
               keyboardType: TextInputType.emailAddress,
               textAlign: TextAlign.center,
-              onChanged: (value) => _email = value,
+              onChanged: (email) => _email = email,
               decoration: kEmailDecoration,
             ),
             const SizedBox(
@@ -64,7 +63,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             TextField(
               obscureText: true,
               textAlign: TextAlign.center,
-              onChanged: (value) => _password = value,
+              onChanged: (password) => _password = password,
               decoration: kPasswordDecoration,
             ),
             const SizedBox(
@@ -73,7 +72,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             RoundedButton(
               title: 'Register',
               color: Colors.blueAccent,
-              onPressed: () => _register(context),
+              onPressed: () {
+                _tryRegister().then((registered) {
+                  if (registered) {
+                    Navigator.pushNamed(context, ChatScreen.route);
+                  }
+                });
+              },
             ),
           ],
         ),
