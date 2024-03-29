@@ -1,13 +1,13 @@
+import 'package:flash_chat/components/loading_indicator.dart';
+import 'package:flash_chat/components/logger.dart';
 import 'package:flash_chat/constants.dart';
 import 'package:flash_chat/components/rounded_button.dart';
 import 'package:flash_chat/extensions/text_editing_controller_extension.dart';
-import 'package:flash_chat/screens/base_screen.dart';
 import 'package:flash_chat/screens/chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 
-class RegistrationScreen extends BaseScreen {
+class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
 
   static const route = '/registration';
@@ -16,7 +16,8 @@ class RegistrationScreen extends BaseScreen {
   State<RegistrationScreen> createState() => _RegistrationScreenState();
 }
 
-class _RegistrationScreenState extends BaseScreenState<RegistrationScreen> {
+class _RegistrationScreenState extends State<RegistrationScreen>
+    with LoadingIndicator<RegistrationScreen>, Logger {
   final _auth = FirebaseAuth.instance;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -41,7 +42,7 @@ class _RegistrationScreenState extends BaseScreenState<RegistrationScreen> {
   }
 
   @override
-  Widget buildBody(BuildContext context) {
+  Widget buildChild(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Column(

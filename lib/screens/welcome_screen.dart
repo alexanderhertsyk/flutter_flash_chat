@@ -1,13 +1,14 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flash_chat/components/loading_indicator.dart';
+import 'package:flash_chat/components/logger.dart';
 import 'package:flash_chat/constants.dart';
-import 'package:flash_chat/screens/base_screen.dart';
 import 'package:flash_chat/screens/login_screen.dart';
 import 'package:flash_chat/screens/registration_screen.dart';
 import 'package:flash_chat/components/rounded_button.dart';
 import 'package:flutter/material.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 
-class WelcomeScreen extends BaseScreen {
+class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
 
   static const route = '/';
@@ -16,8 +17,11 @@ class WelcomeScreen extends BaseScreen {
   State<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
-class _WelcomeScreenState extends BaseScreenState<WelcomeScreen>
-    with SingleTickerProviderStateMixin {
+class _WelcomeScreenState extends State<WelcomeScreen>
+    with
+        SingleTickerProviderStateMixin,
+        LoadingIndicator<WelcomeScreen>,
+        Logger {
   late AnimationController _controller;
   late Animation _animation;
 
@@ -69,7 +73,7 @@ class _WelcomeScreenState extends BaseScreenState<WelcomeScreen>
   }
 
   @override
-  Widget buildBody(BuildContext context) {
+  Widget buildChild(BuildContext context) {
     return Container(
       color: _animation.value,
       padding: const EdgeInsets.symmetric(horizontal: 24.0),

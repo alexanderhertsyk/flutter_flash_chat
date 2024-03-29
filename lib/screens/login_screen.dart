@@ -1,12 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flash_chat/components/loading_indicator.dart';
+import 'package:flash_chat/components/logger.dart';
 import 'package:flash_chat/constants.dart';
 import 'package:flash_chat/components/rounded_button.dart';
 import 'package:flash_chat/extensions/text_editing_controller_extension.dart';
-import 'package:flash_chat/screens/base_screen.dart';
 import 'package:flash_chat/screens/chat_screen.dart';
 import 'package:flutter/material.dart';
 
-class LoginScreen extends BaseScreen {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   static const route = '/login';
@@ -15,7 +16,8 @@ class LoginScreen extends BaseScreen {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends BaseScreenState<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen>
+    with LoadingIndicator<LoginScreen>, Logger {
   final _auth = FirebaseAuth.instance;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -40,7 +42,7 @@ class _LoginScreenState extends BaseScreenState<LoginScreen> {
   }
 
   @override
-  Widget buildBody(BuildContext context) {
+  Widget buildChild(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Column(
