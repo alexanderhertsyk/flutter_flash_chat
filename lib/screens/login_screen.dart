@@ -4,6 +4,7 @@ import 'package:flash_chat/components/logger.dart';
 import 'package:flash_chat/constants.dart';
 import 'package:flash_chat/components/rounded_button.dart';
 import 'package:flash_chat/screens/chat_screen.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -41,6 +42,14 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+
+    super.dispose();
+  }
+
+  @override
   Widget buildChild(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -48,11 +57,13 @@ class _LoginScreenState extends State<LoginScreen>
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Hero(
-            tag: kHeroLogo,
-            child: SizedBox(
-              height: 200.0,
-              child: Image.asset('images/logo.png'),
+          Flexible(
+            child: Hero(
+              tag: kHeroLogo,
+              child: SizedBox(
+                height: 200.0,
+                child: Image.asset('images/logo.png'),
+              ),
             ),
           ),
           const SizedBox(

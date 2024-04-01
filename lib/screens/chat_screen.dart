@@ -54,14 +54,22 @@ class _ChatScreenState extends State<ChatScreen> with LoadingIndicator {
 
       try {
         await _firestore.collection(kMessages).add(MessageModel(
+              senderUid: _loggedUser.uid,
               text: _messageTextController.text,
-              sender: _loggedUser.email ?? 'Nobody',
+              sender: _loggedUser.displayName ?? _loggedUser.email ?? 'Nobody',
             ).toJson());
         _messageTextController.clear();
       } finally {
         setLoading(false);
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _messageTextController.dispose();
+
+    super.dispose();
   }
 
   @override
@@ -91,7 +99,7 @@ class _ChatScreenState extends State<ChatScreen> with LoadingIndicator {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        const MessageStream(),
+        MessageStream(currentUserId: _loggedUser.uid),
         Container(
           decoration: kMessageContainerDecoration,
           child: Row(
@@ -120,7 +128,9 @@ class _ChatScreenState extends State<ChatScreen> with LoadingIndicator {
 }
 
 class MessageStream extends StatelessWidget {
-  const MessageStream({super.key});
+  final String currentUserId;
+
+  const MessageStream({super.key, required this.currentUserId});
 
   List<MessageModel> _snapshotToMessages(
       AsyncSnapshot<QuerySnapshot> snapshot) {
@@ -157,7 +167,11 @@ class MessageStream extends StatelessWidget {
               horizontal: 10,
               vertical: 20,
             ),
-            children: messages.map(MessageBubble.fromModel).toList().cast(),
+            children: messages
+                .map((m) =>
+                    MessageBubble(m, isMyMessage: m.senderUid == currentUserId))
+                .toList()
+                .cast(),
           ),
         );
       },

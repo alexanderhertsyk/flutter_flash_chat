@@ -38,5 +38,8 @@ const kInputDecoration = InputDecoration(
 final kEmailDecoration =
     kInputDecoration.copyWith(hintText: 'Enter your email');
 
+final kNicknameDecoration =
+    kInputDecoration.copyWith(hintText: 'Enter your nickname');
+
 final kPasswordDecoration =
     kInputDecoration.copyWith(hintText: 'Enter your password.');
