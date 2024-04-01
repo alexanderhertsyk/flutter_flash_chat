@@ -1,5 +1,4 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flash_chat/components/firestore_item_builder.dart';
 import 'package:flash_chat/components/loading_indicator.dart';
 import 'package:flash_chat/models/message_model.dart';
 import 'package:flutter/material.dart';
@@ -47,6 +46,16 @@ class _ChatScreenState extends State<ChatScreen> with LoadingIndicator {
 
   Future<void> _logout() => _auth.signOut();
 
+  List<MessageModel> _snapshotToMessages(
+      AsyncSnapshot<QuerySnapshot> snapshot) {
+    return snapshot.data?.docs
+            .map((d) => d.data())
+            .whereType<Map<String, dynamic>>()
+            .map(MessageModel.fromJson)
+            .toList() ??
+        List.empty();
+  }
+
   void _sendMessage() {
     if (_messageText != null) {
       _firestore.collection(kMessages).add(MessageModel(
@@ -83,17 +92,30 @@ class _ChatScreenState extends State<ChatScreen> with LoadingIndicator {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        FirestoreStreamBuilder.build<MessageModel, Text>(
-          context: context,
+        StreamBuilder<QuerySnapshot>(
           stream: _firestore.collection(kMessages).snapshots(),
-          fromJson: MessageModel.fromJson,
-          onItem: (message) => Text('${message.text} from ${message.sender}'),
-          onSucceed: (children) => Column(children: children),
-          onError: () => const Expanded(
-            child: Center(
-              child: Text('No messages'),
-            ),
-          ),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return const Expanded(
+                  child: Center(child: Text('Something went wrong')));
+            }
+
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Expanded(child: Center(child: Text('Loading')));
+            }
+
+            var messages = _snapshotToMessages(snapshot);
+
+            if (messages.isEmpty) {
+              return const Expanded(child: Center(child: Text('No messages')));
+            }
+
+            return Column(
+              children: messages
+                  .map((m) => Text('${m.text} from ${m.sender}'))
+                  .toList(),
+            );
+          },
         ),
         Container(
           decoration: kMessageContainerDecoration,
