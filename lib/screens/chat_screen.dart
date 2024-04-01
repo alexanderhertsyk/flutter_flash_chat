@@ -1,17 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flash_chat/components/loading_indicator.dart';
+import 'package:flash_chat/models/message_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flash_chat/constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 const kMessages = 'messages';
-const kMessageText = 'text';
-const kMessageSender = 'sender';
-// TODO: replace w/ general onItem & create Message model w/ json deserializing to use it instead of dynamic mapping
-typedef OnMessage = Widget Function({
-  required String text,
-  required String sender,
-});
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -52,31 +46,23 @@ class _ChatScreenState extends State<ChatScreen> with LoadingIndicator {
 
   Future<void> _logout() => _auth.signOut();
 
-  Widget _messageBuilder(
-    BuildContext context,
-    AsyncSnapshot<QuerySnapshot> snapshot, {
-    required OnMessage onMessage,
-    required Widget Function() onError,
-  }) {
-    if (snapshot.hasData) {
-      return Column(
-        children: snapshot.data!.docs
+  List<MessageModel> _snapshotToMessages(
+      AsyncSnapshot<QuerySnapshot> snapshot) {
+    return snapshot.data?.docs
             .map((d) => d.data())
             .whereType<Map<String, dynamic>>()
-            .map((m) =>
-                onMessage(text: m[kMessageText], sender: m[kMessageSender]))
-            .toList(),
-      );
-    } else {
-      return onError();
-    }
+            .map(MessageModel.fromJson)
+            .toList() ??
+        List.empty();
   }
 
   void _sendMessage() {
-    _firestore.collection(kMessages).add({
-      kMessageText: _messageText,
-      kMessageSender: _loggedUser.email,
-    });
+    if (_messageText != null) {
+      _firestore.collection(kMessages).add(MessageModel(
+            text: _messageText!,
+            sender: _loggedUser.email ?? 'Nobody',
+          ).toJson());
+    }
   }
 
   @override
@@ -108,17 +94,28 @@ class _ChatScreenState extends State<ChatScreen> with LoadingIndicator {
       children: <Widget>[
         StreamBuilder<QuerySnapshot>(
           stream: _firestore.collection(kMessages).snapshots(),
-          builder: (context, snapshot) => _messageBuilder(
-            context,
-            snapshot,
-            onMessage: ({required String text, required String sender}) =>
-                Text('$text from $sender'),
-            onError: () => const Expanded(
-              child: Center(
-                child: Text('No messages!'),
-              ),
-            ),
-          ),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return const Expanded(
+                  child: Center(child: Text('Something went wrong')));
+            }
+
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Expanded(child: Center(child: Text('Loading')));
+            }
+
+            var messages = _snapshotToMessages(snapshot);
+
+            if (messages.isEmpty) {
+              return const Expanded(child: Center(child: Text('No messages')));
+            }
+
+            return Column(
+              children: messages
+                  .map((m) => Text('${m.text} from ${m.sender}'))
+                  .toList(),
+            );
+          },
         ),
         Container(
           decoration: kMessageContainerDecoration,
