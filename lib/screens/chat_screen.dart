@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flash_chat/components/loading_indicator.dart';
+import 'package:flash_chat/components/message_bubble.dart';
 import 'package:flash_chat/models/message_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flash_chat/constants.dart';
@@ -96,8 +97,7 @@ class _ChatScreenState extends State<ChatScreen> with LoadingIndicator {
           stream: _firestore.collection(kMessages).snapshots(),
           builder: (context, snapshot) {
             if (snapshot.hasError) {
-              return const Expanded(
-                  child: Center(child: Text('Something went wrong')));
+              return const Expanded(child: Center(child: Text('Error')));
             }
 
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -110,10 +110,14 @@ class _ChatScreenState extends State<ChatScreen> with LoadingIndicator {
               return const Expanded(child: Center(child: Text('No messages')));
             }
 
-            return Column(
-              children: messages
-                  .map((m) => Text('${m.text} from ${m.sender}'))
-                  .toList(),
+            return Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 20,
+                ),
+                children: messages.map(MessageBubble.fromModel).toList().cast(),
+              ),
             );
           },
         ),
