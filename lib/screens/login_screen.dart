@@ -3,7 +3,6 @@ import 'package:flash_chat/components/loading_indicator.dart';
 import 'package:flash_chat/components/logger.dart';
 import 'package:flash_chat/constants.dart';
 import 'package:flash_chat/components/rounded_button.dart';
-import 'package:flash_chat/extensions/text_editing_controller_extension.dart';
 import 'package:flash_chat/screens/chat_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -83,10 +82,8 @@ class _LoginScreenState extends State<LoginScreen>
               _tryLogin().then((logged) {
                 if (logged) {
                   Navigator.pushNamed(context, ChatScreen.route);
-                  setState(() {
-                    _emailController.resetValue();
-                    _passwordController.resetValue();
-                  });
+                  _emailController.clear();
+                  _passwordController.clear();
                 }
               });
             },
