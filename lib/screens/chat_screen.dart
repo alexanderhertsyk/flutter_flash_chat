@@ -1,17 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flash_chat/components/firestore_item_builder.dart';
 import 'package:flash_chat/components/loading_indicator.dart';
+import 'package:flash_chat/models/message_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flash_chat/constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 const kMessages = 'messages';
-const kMessageText = 'text';
-const kMessageSender = 'sender';
-// TODO: replace w/ general onItem & create Message model w/ json deserializing to use it instead of dynamic mapping
-typedef OnMessage = Widget Function({
-  required String text,
-  required String sender,
-});
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -52,31 +47,13 @@ class _ChatScreenState extends State<ChatScreen> with LoadingIndicator {
 
   Future<void> _logout() => _auth.signOut();
 
-  Widget _messageBuilder(
-    BuildContext context,
-    AsyncSnapshot<QuerySnapshot> snapshot, {
-    required OnMessage onMessage,
-    required Widget Function() onError,
-  }) {
-    if (snapshot.hasData) {
-      return Column(
-        children: snapshot.data!.docs
-            .map((d) => d.data())
-            .whereType<Map<String, dynamic>>()
-            .map((m) =>
-                onMessage(text: m[kMessageText], sender: m[kMessageSender]))
-            .toList(),
-      );
-    } else {
-      return onError();
-    }
-  }
-
   void _sendMessage() {
-    _firestore.collection(kMessages).add({
-      kMessageText: _messageText,
-      kMessageSender: _loggedUser.email,
-    });
+    if (_messageText != null) {
+      _firestore.collection(kMessages).add(MessageModel(
+            text: _messageText!,
+            sender: _loggedUser.email ?? 'Nobody',
+          ).toJson());
+    }
   }
 
   @override
@@ -106,17 +83,15 @@ class _ChatScreenState extends State<ChatScreen> with LoadingIndicator {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        StreamBuilder<QuerySnapshot>(
+        FirestoreStreamBuilder.build<MessageModel, Text>(
+          context: context,
           stream: _firestore.collection(kMessages).snapshots(),
-          builder: (context, snapshot) => _messageBuilder(
-            context,
-            snapshot,
-            onMessage: ({required String text, required String sender}) =>
-                Text('$text from $sender'),
-            onError: () => const Expanded(
-              child: Center(
-                child: Text('No messages!'),
-              ),
+          fromJson: MessageModel.fromJson,
+          onItem: (message) => Text('${message.text} from ${message.sender}'),
+          onSucceed: (children) => Column(children: children),
+          onError: () => const Expanded(
+            child: Center(
+              child: Text('No messages'),
             ),
           ),
         ),
