@@ -6,7 +6,7 @@ mixin LoadingIndicator<T extends StatefulWidget> on State<T> {
 
   void setLoading(bool value) => setState(() => _isLoading = value);
 
-  Widget buildParent(BuildContext context, Widget? child) {
+  Widget buildParent(BuildContext context, Widget child) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: child,
