@@ -7,6 +7,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 const kMessages = 'messages';
 const kMessageText = 'text';
 const kMessageSender = 'sender';
+// TODO: replace w/ general onItem & create Message model w/ json deserializing to use it instead of dynamic mapping
+typedef OnMessage = Widget Function({
+  required String text,
+  required String sender,
+});
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -47,6 +52,26 @@ class _ChatScreenState extends State<ChatScreen> with LoadingIndicator {
 
   Future<void> _logout() => _auth.signOut();
 
+  Widget _messageBuilder(
+    BuildContext context,
+    AsyncSnapshot<QuerySnapshot> snapshot, {
+    required OnMessage onMessage,
+    required Widget Function() onError,
+  }) {
+    if (snapshot.hasData) {
+      return Column(
+        children: snapshot.data!.docs
+            .map((d) => d.data())
+            .whereType<Map<String, dynamic>>()
+            .map((m) =>
+                onMessage(text: m[kMessageText], sender: m[kMessageSender]))
+            .toList(),
+      );
+    } else {
+      return onError();
+    }
+  }
+
   void _sendMessage() {
     _firestore.collection(kMessages).add({
       kMessageText: _messageText,
@@ -83,20 +108,17 @@ class _ChatScreenState extends State<ChatScreen> with LoadingIndicator {
       children: <Widget>[
         StreamBuilder<QuerySnapshot>(
           stream: _firestore.collection(kMessages).snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              return Column(
-                children: snapshot.data!.docs
-                    .map((d) => d.data())
-                    .whereType<Map<String, dynamic>>()
-                    .map((m) =>
-                        Text('${m[kMessageText]} from ${m[kMessageSender]}'))
-                    .toList(),
-              );
-            } else {
-              return const Expanded(child: Center(child: Text('No messages!')));
-            }
-          },
+          builder: (context, snapshot) => _messageBuilder(
+            context,
+            snapshot,
+            onMessage: ({required String text, required String sender}) =>
+                Text('$text from $sender'),
+            onError: () => const Expanded(
+              child: Center(
+                child: Text('No messages!'),
+              ),
+            ),
+          ),
         ),
         Container(
           decoration: kMessageContainerDecoration,
