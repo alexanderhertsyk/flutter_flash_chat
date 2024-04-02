@@ -23,21 +23,21 @@ class MessageBubble extends StatelessWidget {
               bottomRight: const Radius.circular(30.0),
             ),
             elevation: 5.0,
-            color: isMyMessage ? Colors.lightBlueAccent : Colors.grey,
+            color: isMyMessage ? Colors.lightBlueAccent : Colors.grey.shade300,
             child: Padding(
               padding:
                   const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
               child: Text(
                 message.text,
                 style: TextStyle(
-                  color: isMyMessage ? Colors.white : Colors.black,
+                  color: isMyMessage ? Colors.white : Colors.black54,
                   fontSize: 15.0,
                 ),
               ),
             ),
           ),
           Text(
-            message.sender,
+            isMyMessage ? 'me' : message.sender,
             style: const TextStyle(
               fontSize: 12.0,
               color: Colors.black54,

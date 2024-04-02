@@ -54,6 +54,7 @@ class _ChatScreenState extends State<ChatScreen> with LoadingIndicator {
 
       try {
         await _firestore.collection(kMessages).add(MessageModel(
+              time: DateTime.now(),
               senderUid: _loggedUser.uid,
               text: _messageTextController.text,
               sender: _loggedUser.displayName ?? _loggedUser.email ?? 'Nobody',
@@ -158,11 +159,14 @@ class MessageStream extends StatelessWidget {
         var messages = _snapshotToMessages(snapshot);
 
         if (messages.isEmpty) {
-          return const Expanded(child: Center(child: Text('No messages')));
+          return const Expanded(child: Center(child: Text('No messages...')));
         }
+
+        messages.sort((m1, m2) => m1.time.compareTo(m2.time) * -1);
 
         return Expanded(
           child: ListView(
+            reverse: true,
             padding: const EdgeInsets.symmetric(
               horizontal: 10,
               vertical: 20,
