@@ -1,11 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flash_chat/components/loading_indicator.dart';
+import 'package:flash_chat/components/message_bubble.dart';
 import 'package:flash_chat/models/message_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flash_chat/constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 const kMessages = 'messages';
+
+final _firestore = FirebaseFirestore.instance;
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -18,9 +21,8 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> with LoadingIndicator {
   final _auth = FirebaseAuth.instance;
-  final _firestore = FirebaseFirestore.instance;
   late User _loggedUser;
-  String? _messageText;
+  final _messageTextController = TextEditingController();
 
   @override
   void initState() {
@@ -46,23 +48,29 @@ class _ChatScreenState extends State<ChatScreen> with LoadingIndicator {
 
   Future<void> _logout() => _auth.signOut();
 
-  List<MessageModel> _snapshotToMessages(
-      AsyncSnapshot<QuerySnapshot> snapshot) {
-    return snapshot.data?.docs
-            .map((d) => d.data())
-            .whereType<Map<String, dynamic>>()
-            .map(MessageModel.fromJson)
-            .toList() ??
-        List.empty();
+  void _sendMessage() async {
+    if (_messageTextController.text.isNotEmpty) {
+      setLoading(true);
+
+      try {
+        await _firestore.collection(kMessages).add(MessageModel(
+              time: DateTime.now(),
+              senderUid: _loggedUser.uid,
+              text: _messageTextController.text,
+              sender: _loggedUser.displayName ?? _loggedUser.email ?? 'Nobody',
+            ).toJson());
+        _messageTextController.clear();
+      } finally {
+        setLoading(false);
+      }
+    }
   }
 
-  void _sendMessage() {
-    if (_messageText != null) {
-      _firestore.collection(kMessages).add(MessageModel(
-            text: _messageText!,
-            sender: _loggedUser.email ?? 'Nobody',
-          ).toJson());
-    }
+  @override
+  void dispose() {
+    _messageTextController.dispose();
+
+    super.dispose();
   }
 
   @override
@@ -92,31 +100,7 @@ class _ChatScreenState extends State<ChatScreen> with LoadingIndicator {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        StreamBuilder<QuerySnapshot>(
-          stream: _firestore.collection(kMessages).snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return const Expanded(
-                  child: Center(child: Text('Something went wrong')));
-            }
-
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Expanded(child: Center(child: Text('Loading')));
-            }
-
-            var messages = _snapshotToMessages(snapshot);
-
-            if (messages.isEmpty) {
-              return const Expanded(child: Center(child: Text('No messages')));
-            }
-
-            return Column(
-              children: messages
-                  .map((m) => Text('${m.text} from ${m.sender}'))
-                  .toList(),
-            );
-          },
-        ),
+        MessageStream(currentUserId: _loggedUser.uid),
         Container(
           decoration: kMessageContainerDecoration,
           child: Row(
@@ -124,7 +108,8 @@ class _ChatScreenState extends State<ChatScreen> with LoadingIndicator {
             children: <Widget>[
               Expanded(
                 child: TextField(
-                  onChanged: (value) => _messageText = value,
+                  controller: _messageTextController,
+                  // onChanged: (value) => _messageText = value,
                   decoration: kMessageTextFieldDecoration,
                 ),
               ),
@@ -139,6 +124,61 @@ class _ChatScreenState extends State<ChatScreen> with LoadingIndicator {
           ),
         ),
       ],
+    );
+  }
+}
+
+class MessageStream extends StatelessWidget {
+  final String currentUserId;
+
+  const MessageStream({super.key, required this.currentUserId});
+
+  List<MessageModel> _snapshotToMessages(
+      AsyncSnapshot<QuerySnapshot> snapshot) {
+    return snapshot.data?.docs
+            .map((d) => d.data())
+            .whereType<Map<String, dynamic>>()
+            .map(MessageModel.fromJson)
+            .toList() ??
+        List.empty();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore.collection(kMessages).snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const Expanded(child: Center(child: Text('Error')));
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Expanded(child: Center(child: Text('Loading')));
+        }
+
+        var messages = _snapshotToMessages(snapshot);
+
+        if (messages.isEmpty) {
+          return const Expanded(child: Center(child: Text('No messages...')));
+        }
+
+        messages.sort((m1, m2) => m1.time.compareTo(m2.time) * -1);
+
+        return Expanded(
+          child: ListView(
+            reverse: true,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 20,
+            ),
+            children: messages
+                .map((m) =>
+                    MessageBubble(m, isMyMessage: m.senderUid == currentUserId))
+                .toList()
+                .cast(),
+          ),
+        );
+      },
     );
   }
 }
